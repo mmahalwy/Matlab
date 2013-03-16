@@ -127,13 +127,13 @@ while doneExp == 0;
     
     
     %Varied SOA by the loop
-%     if soaVar==1
-%         soaRand= soa(1,1);
-%     else
-%         soaRand=soa(1,2);
-%     end
-%     WaitSecs(soaRand);
-WaitSecs(0.01);    
+    if soaVar==1
+        soaRand= soa(1,1);
+    else
+        soaRand=soa(1,2);
+    end
+    WaitSecs(soaRand);
+   
     %mask
     Screen('PutImage', window, mask);
     Screen('Flip', window);
