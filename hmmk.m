@@ -228,8 +228,7 @@ while doneExp == 0;
     end
     
     %recording data
-    dataMatrix(trialCounter,:)=[trialCounter, BWcondition, theColor, theResponse, accuracy, RT, soaRand, wordSize];
-    dlmwrite(filename, dataMatrix);
+dataMatrix(trialCounter,:)=[trialCounter, wordSize, soaRand, BWcondition, theColor, theResponse, accuracy, RT];    dlmwrite(filename, dataMatrix);
     
     trialCounter = trialCounter+1;
     
@@ -401,8 +400,7 @@ while doneExp == 0;
     end
     
     %recording data
-    dataMatrix(trialCounter,:)=[trialCounter, wordSize, soaRand, BWcondition, theColor, theResponse, accuracy, RT];
-    dlmwrite(filename, dataMatrix);
+    dataMatrix(trialCounter,:)=[trialCounter, wordSize, soaRand, BWcondition, theColor, theResponse, accuracy, RT];    dlmwrite(filename, dataMatrix);
     
     trialCounter = trialCounter+1;
     
