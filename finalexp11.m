@@ -9,22 +9,13 @@ Screen('FillRect',window, [255 255 255]);
 Screen('Flip',window);
 
 %Instructions
-Screen('TextSize', window , 30); %define text size
-Screen('FillRect', window, [255 255 255]); %fill in color
-Screen('DrawText', window, 'Words will flash either in black text or in Color.',325,300);%instructions
-Screen('DrawText', window, 'Choices of words will be presented after.',325,350);%instructions
-Screen('Flip',window);
-WaitSecs(0.5); %-----MAKE SURE TO CHANGE THIS TO 2
+ 
 
-%Key instructions
-Screen('TextSize', window , 30); %define text size
-Screen('FillRect', window, [255 255 255]); %fill in color
-Screen('DrawText',window, 'Press A' , 375,350, [0 0 0])
-Screen('DrawText',window, 'Press Z' , 450,450, [0 0 0])
-Screen('DrawText',window, 'Press M', 750,450, [0 0 0])
-Screen('DrawText',window, 'Press K', 825,350, [0 0 0])
+Screen('TextSize', window , 30);
+Screen('FillRect', window, [255 255 255]);
+Screen('DrawText', window, 'Ready?',575,300);
 Screen('Flip',window);
-WaitSecs(0.5); %-----MAKE SURE TO CHANGE THIS TO 2
+WaitSecs(2);
 
 
 %------DEFINING VARIABLES-------
@@ -46,26 +37,31 @@ mask=imread('mask.png');
 %extract data and condition matrix
 [ndata, text, alldata] = xlsread('testwords.xls');
 %build matrix for BWcondition and Color output
-conditionMatrix = [repmat(0,1,24); repmat(1,1,8), repmat(2,1,8),repmat(3,1,8)]';
 
 %randomizing SOA
-soa=[0.01 0.03];
+soa=[0.01 0.02 0.03];
 soa=Shuffle(soa);
 
+%defining colors
+r = [255 0 0];
+b = [50 105 255];
+g = [0 205 0];
+colorSel=[1 2];
 
 
+trialCounter=1
 %---------Begin Experiment-----------------
-
-for soaVar=1:2
+for soaVar=1:3
 doneExp = 0;
-trialCounter = 1;
+conditionMatrix = [repmat(0,1,24); repmat(1,1,8), repmat(2,1,8),repmat(3,1,8)]';
+wordSize = 4;
 while doneExp == 0;
     
     doneLooking=0;
     while doneLooking == 0;
         %Random Rows
         theRow= round(1 + (24-1).*rand(1,1)); %outputs a random number;
-        if conditionMatrix(theRow,1) <2
+        if conditionMatrix(theRow,1) <3
             doneLooking = 1;
         end
     end
@@ -92,6 +88,7 @@ while doneExp == 0;
     %Cue Screen
     Screen('FillRect',window, [255 255 255]);
     Screen('Flip', window);
+   
     
     %Conditions
     if BWcondition == 0
@@ -107,20 +104,48 @@ while doneExp == 0;
         if theColor==1
             %present in red
             Screen('TextSize', window , 50);
-            Screen('DrawText',window, sprintf('%s', cell2mat(theWord)), 600,400, [150 20 20])
+            Screen('DrawText',window, sprintf('%s', cell2mat(theWord)), 600,400, r)
             Screen('Flip', window);
         elseif theColor==2
             %present in blue
             Screen('TextSize', window , 50);
-            Screen('DrawText',window, sprintf('%s', cell2mat(theWord)), 600,400, [20 20 150])
+            Screen('DrawText',window, sprintf('%s', cell2mat(theWord)), 600,400, b)
             Screen('Flip', window);
         elseif theColor==3
             %present in green
             Screen('TextSize', window , 50);
-            Screen('DrawText',window, sprintf('%s', cell2mat(theWord)), 600,400, [20 150 20])
+            Screen('DrawText',window, sprintf('%s', cell2mat(theWord)), 600,400, g)
             Screen('Flip', window);
         end
-        
+        %add one to the BWcondition
+        conditionMatrix(theRow,1)= conditionMatrix(theRow,1)+1;
+    elseif BWcondition ==2
+         %present in color
+        if theColor==1
+            %if color is red, present in blue or green
+            colorVar=[b;g];
+            colorSel=Shuffle(colorSel);
+            theWord
+            Screen('TextSize', window , 50);
+            Screen('DrawText',window, sprintf('%s', cell2mat(theWord)), 600,400, colorVar(colorSel(1,1),:))
+            Screen('Flip', window);
+        elseif theColor==2
+            %if color is blue, present in green or red
+            colorVar=[r;g];
+            colorSel=Shuffle(colorSel);
+            theWord
+            Screen('TextSize', window , 50);
+            Screen('DrawText',window, sprintf('%s', cell2mat(theWord)), 600,400, colorVar(colorSel(1,1),:))
+            Screen('Flip', window);
+        elseif theColor==3
+            %if color is green, present in red or blue
+            colorVar=[b;r];
+            colorSel=Shuffle(colorSel);
+            theWord
+            Screen('TextSize', window , 50);
+            Screen('DrawText',window, sprintf('%s', cell2mat(theWord)), 600,400, colorVar(colorSel(1,1),:))
+            Screen('Flip', window);
+        end
         %add one to the BWcondition
         conditionMatrix(theRow,1)= conditionMatrix(theRow,1)+1;
     end
@@ -129,11 +154,13 @@ while doneExp == 0;
     %Varied SOA by the loop
     if soaVar==1
         soaRand= soa(1,1);
-    else
+    elseif soaVar==2
         soaRand=soa(1,2);
+    else
+        soaRand=soa(1,3);
     end
     WaitSecs(soaRand);
-   
+    
     %mask
     Screen('PutImage', window, mask);
     Screen('Flip', window);
@@ -199,40 +226,45 @@ while doneExp == 0;
     end
     
     %recording data
-    dataMatrix(trialCounter,:)=[trialCounter, BWcondition, theColor, theResponse, accuracy, RT];
-    dlmwrite(filename, dataMatrix);
-    
+dataMatrix(trialCounter,:)=[trialCounter, wordSize, soaRand, theRow, BWcondition, theColor, theResponse, accuracy, RT];    
+dlmwrite(filename, dataMatrix);
+
+    %trial counter
     trialCounter = trialCounter+1;
     
+    
     %word will not be used if BWcondition=2, end while loop when BWcondition addition is 72
-    sumWords = sum(conditionMatrix(:,1)) %to add all the data
-    if sumWords ==48
+    sumWords = sum(conditionMatrix(:,1)); %to add all the data
+    if sumWords ==72
         doneExp = 1;
     end
-     
+    
+    
 end
 end
 
 %--------------------------END OF 4 LETTER WORDS, BEGIN 5 LETTER---------
-WaitSecs(1);
+Screen('PutImage', window, mask);
+Screen('Flip', window);
+WaitSecs(0.5);
 [ndata, text, alldata] = xlsread('testwords2.xls');
-conditionMatrix = [repmat(0,1,39); repmat(1,1,13), repmat(2,1,13),repmat(3,1,13)]';
 Screen('TextSize', window , 30); %define text size
 Screen('FillRect', window, [255 255 255]); %fill in color
-Screen('DrawText', window, 'Take 5 seconds break',325,300);%instructions
+Screen('DrawText', window, 'Take 5 seconds break',400,300);%instructions
 Screen('Flip',window);
 WaitSecs(5); %-----MAKE SURE TO CHANGE THIS TO 2
 
-for soaVar=1:2
+for soaVar=1:3
 doneExp = 0;
-trialCounter = 1;
+conditionMatrix = [repmat(0,1,39); repmat(1,1,13), repmat(2,1,13),repmat(3,1,13)]';
+wordSize = 5;
 while doneExp == 0;
     
     doneLooking=0;
     while doneLooking == 0;
         %Random Rows
         theRow= round(1 + (39-1).*rand(1,1)); %outputs a random number;
-        if conditionMatrix(theRow,1) <2
+        if conditionMatrix(theRow,1) <3
             doneLooking = 1;
         end
     end
@@ -260,7 +292,7 @@ while doneExp == 0;
     Screen('FillRect',window, [255 255 255]);
     Screen('Flip', window);
     
-    %Conditions
+   %Conditions
     if BWcondition == 0
         %present in black
         Screen('TextSize', window , 50);
@@ -274,20 +306,48 @@ while doneExp == 0;
         if theColor==1
             %present in red
             Screen('TextSize', window , 50);
-            Screen('DrawText',window, sprintf('%s', cell2mat(theWord)), 600,400, [150 20 20])
+            Screen('DrawText',window, sprintf('%s', cell2mat(theWord)), 600,400, r)
             Screen('Flip', window);
         elseif theColor==2
             %present in blue
             Screen('TextSize', window , 50);
-            Screen('DrawText',window, sprintf('%s', cell2mat(theWord)), 600,400, [20 20 150])
+            Screen('DrawText',window, sprintf('%s', cell2mat(theWord)), 600,400, b)
             Screen('Flip', window);
         elseif theColor==3
             %present in green
             Screen('TextSize', window , 50);
-            Screen('DrawText',window, sprintf('%s', cell2mat(theWord)), 600,400, [20 150 20])
+            Screen('DrawText',window, sprintf('%s', cell2mat(theWord)), 600,400, g)
             Screen('Flip', window);
         end
-        
+        %add one to the BWcondition
+        conditionMatrix(theRow,1)= conditionMatrix(theRow,1)+1;
+    elseif BWcondition ==2
+         %present in color
+        if theColor==1
+            %if color is red, present in blue or green
+            colorVar=[b;g];
+            colorSel=Shuffle(colorSel);
+            theWord
+            Screen('TextSize', window , 50);
+            Screen('DrawText',window, sprintf('%s', cell2mat(theWord)), 600,400, colorVar(colorSel(1,1),:))
+            Screen('Flip', window);
+        elseif theColor==2
+            %if color is blue, present in green or red
+            colorVar=[r;g];
+            colorSel=Shuffle(colorSel);
+            theWord
+            Screen('TextSize', window , 50);
+            Screen('DrawText',window, sprintf('%s', cell2mat(theWord)), 600,400, colorVar(colorSel(1,1),:))
+            Screen('Flip', window);
+        elseif theColor==3
+            %if color is green, present in red or blue
+            colorVar=[b;r];
+            colorSel=Shuffle(colorSel);
+            theWord
+            Screen('TextSize', window , 50);
+            Screen('DrawText',window, sprintf('%s', cell2mat(theWord)), 600,400, colorVar(colorSel(1,1),:))
+            Screen('Flip', window);
+        end
         %add one to the BWcondition
         conditionMatrix(theRow,1)= conditionMatrix(theRow,1)+1;
     end
@@ -296,8 +356,10 @@ while doneExp == 0;
     %Varied SOA by the loop
     if soaVar==1
         soaRand= soa(1,1);
-    else
+    elseif soaVar==2
         soaRand=soa(1,2);
+    else
+        soaRand=soa(1,3);
     end
     WaitSecs(soaRand);
     
@@ -366,20 +428,26 @@ while doneExp == 0;
     end
     
     %recording data
-    dataMatrix(trialCounter,:)=[BWcondition, theColor, theResponse, accuracy, RT];
-    dlmwrite(filename, dataMatrix);
+dataMatrix(trialCounter,:)=[trialCounter, wordSize, soaRand, theRow, BWcondition, theColor, theResponse, accuracy, RT];        dlmwrite(filename, dataMatrix);
     
     trialCounter = trialCounter+1;
     
+    
     %word will not be used if BWcondition=2, end while loop when BWcondition addition is 72
     sumWords = sum(conditionMatrix(:,1)); %to add all the data
-    if sumWords ==78
+    if sumWords ==117
         doneExp = 1;
     end
     
     
 end
 end
+Screen('TextSize', window , 30); %define text size
+Screen('FillRect', window, [255 255 255]); %fill in color
+Screen('DrawText', window, 'Thank you for doing my experiment!',400,300);%instructions
+Screen('Flip',window);
+WaitSecs(1); %-----MAKE SURE TO CHANGE THIS TO 2
+Screen('CloseAll') 
 
 end
 

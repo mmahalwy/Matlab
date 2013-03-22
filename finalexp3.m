@@ -1,16 +1,30 @@
 
+function dataMatrix = finalexp5(filename) %to run this all you need to do is type demoExperiment('filename')
+
 %opens window
-[window,rect]=Screen('OpenWindow', 1); %I defined 0 as the master screen, to output on secondary, window set to '1'
+[window,rect]=Screen('OpenWindow', 0); 
+
 %puts in a colour
-Screen('FillRect',window, [255 255 255]);%fills the window with a colour, RGB
-Screen('Flip',window); %flips the newest colour of the window 
+Screen('FillRect',window, [255 255 255]);
+Screen('Flip',window); 
 
 %Instructions
 Screen('TextSize', window , 30); %define text size
 Screen('FillRect', window, [255 255 255]); %fill in color
-Screen('DrawText', window, 'Instructions: Press Z if you see a cat and M if you see a Dog',185,300);%instructions
-Screen('Flip',window); %flip to front
-WaitSecs(0.5); %present instructions for 1s
+Screen('DrawText', window, 'Words will flash either in Black text or in Color.',325,300);%instructions
+Screen('DrawText', window, 'Choices of words will be presented after.',325,450);%instructions
+Screen('Flip',window); 
+WaitSecs(3); 
+
+%Key instructions
+Screen('TextSize', window , 30); %define text size
+Screen('FillRect', window, [255 255 255]); %fill in color
+Screen('DrawText',window, 'Press A' , 375,350, [0 0 0])
+Screen('DrawText',window, 'Press Z' , 450,450, [0 0 0])
+Screen('DrawText',window, 'Press M', 750,450, [0 0 0])
+Screen('DrawText',window, 'Press K', 825,350, [0 0 0])
+Screen('Flip',window); 
+WaitSecs(3); 
 
 
 %------DEFINING VARIABLES-------
@@ -29,62 +43,157 @@ trightKey=KbName('k'); %right button is m
 mask=imread('mask.png');
 
 
-%extract data
+%extract data and condition matrix
 [ndata, text, alldata] = xlsread('testmatlab.xls');
-
+%build matrix for BWcondition and Color output
+conditionMatrix = [repmat(0,1,36); repmat(1,1,12), repmat(2,1,12),repmat(3,1,12)]';
 
 
 %begin experiment
 doneLooking=0;
-clear all
-clear all
-while doneLooking == 0
-    theRow= round(1 + (36-1).*rand(1,1)) %outputs a random number;
+
+while doneLooking == 0;
+    %Random Rows
+    theRow= round(1 + (36-1).*rand(1,1)); %outputs a random number;
+    
+    %Random other words, made sure it is not same as theWord
+    wordNumbers=0;
+    while wordNumbers==0
+    other1= round(1 + (36-1).*rand(1,1));
+    other2= round(1 + (36-1).*rand(1,1));
+    other3= round(1 + (36-1).*rand(1,1));
+        if theRow~=other1 && theRow~=other2 && theRow~=other3
+            wordNumbers=1;
+        end
+    end
+    
+    %Dynamic variables
     theWord= alldata(theRow,1);
-    BWcondition = alldata(theRow,2);
-    theColor = alldata(theRow,3);
+    BWcondition = conditionMatrix(theRow,1);
+    theColor = conditionMatrix(theRow,2);
+    otherWord1= alldata(other1,1);
+    otherWord2= alldata(other2,1);
+    otherWord3= alldata(other3,1);
+    
+    %Cue Screen
     Screen('FillRect',window, [255 255 255]);
     Screen('Flip', window);
+    
+    %Conditions
     if BWcondition == 0
         %present in black
         Screen('TextSize', window , 50);
-        Screen('DrawText',window, theWord, 600,300)
+        Screen('DrawText',window, sprintf('%s', cell2mat(theWord)) , 600,400, [0 0 0])
+        Screen('Flip', window);
         %add one to the BWcondition
-        alldata(theRow,2)= alldata(theRow,2)+1;
+        conditionMatrix(theRow,1)= conditionMatrix(theRow,1)+1;
     
     elseif BWcondition ==1
         %present in color
         if theColor==1
             %present in red
             Screen('TextSize', window , 50);
-            Screen('DrawText',window, theWord, 600,300, [150 20 20])
+            Screen('DrawText',window, sprintf('%s', cell2mat(theWord)), 600,400, [150 20 20])
+            Screen('Flip', window);
         elseif theColor==2
             %present in blue
             Screen('TextSize', window , 50);
-            Screen('DrawText',window, theWord, 600,300, [20 20 150])
+            Screen('DrawText',window, sprintf('%s', cell2mat(theWord)), 600,400, [20 20 150])
+            Screen('Flip', window);
         elseif theColor==3
             %present in green
             Screen('TextSize', window , 50);
-            Screen('DrawText',window, theWord, 600,300, [20 150 20])
+            Screen('DrawText',window, sprintf('%s', cell2mat(theWord)), 600,400, [20 150 20])
+            Screen('Flip', window);
         end
         
         %add one to the BWcondition
-        alldata(theRow,2)= alldata(theRow,2)+1;
+        conditionMatrix(theRow,1)= conditionMatrix(theRow,1)+1;
     
     else %if BWcondition ==2
-        %find new word
+        %find new word for theWord
         doneLooking = 0;
     end
+    WaitSecs(0.05);
+   
+    %mask
+    Screen('PutImage', window, mask);
+    Screen('Flip', window);
+    WaitSecs(0.5);
     
     
-    %check to see if addition is all equal to 3
-    sumAll = sum(cell2mat(alldata(:,2))) %to add all the data 
+    %Choice of words
+    %created a matrix between the words and number 1:4 (choice of spot)
+    wordChoice=[theWord otherWord1 otherWord2 otherWord3];
+    wordChoice=Shuffle(wordChoice);
+    
+    %find theWord when shuffled
+    [truefalse, index] = ismember(theWord, wordChoice);
+    
+    %inputting the words within the different spots
+    varChoice1= wordChoice(1,1);
+    varChoice2= wordChoice(1,2);
+    varChoice3= wordChoice(1,3);
+    varChoice4= wordChoice(1,4);
+   
+    %present the word choices
+    Screen('TextSize', window , 50);
+    Screen('FillRect', window, [255 255 255]);
+    Screen('DrawText',window, sprintf('%s', cell2mat(varChoice1)), 375,350, [0 0 0])
+    Screen('DrawText',window, sprintf('%s', cell2mat(varChoice2)), 450,450, [0 0 0])
+    Screen('DrawText',window, sprintf('%s', cell2mat(varChoice3)), 750,450, [0 0 0])
+    Screen('DrawText',window, sprintf('%s', cell2mat(varChoice4)), 825,350, [0 0 0])
+    Screen('Flip',window);
+    
+    
+    %timer for RT, start
+    startTime=GetSecs;
+    
+    %wait key press
+    waiting=1;
+    while waiting==1
+        [keyIsDown,secs,keyCode]=KbCheck(theKeyboard); %looking for key to be pressed
+        if keyCode(tleftKey)==1 
+            theResponse=1; 
+            waiting=0; 
+        elseif keyCode(bleftKey)==1 
+            theResponse=2; 
+            waiting=0;
+         elseif keyCode(brightKey)==1 
+            theResponse=3; 
+            waiting=0;
+         elseif keyCode(trightKey)==1 
+            theResponse=4; 
+            waiting=0; 
+        end
+        %end RT timer
+         endTime=GetSecs; 
+    end
+    
+    %Determine RT
+    RT=(endTime - startTime);
+    
+    %Recording accuracy
+    if theResponse==index %index is location of theWord, finding if pressed correctly
+        accuracy=1; %if accurate
+    else
+        accuracy=0; %if incorrect
+    end
+    
+    %word will not be used if BWcondition=2, end while loop when BWcondition addition is 72 
+    sumAll = sum(conditionMatrix(:,1)); %to add all the data 
     if sumAll ==72 
         doneLooking = 1;
     end
+    
+    %recording data
+    dataMatrix(sumAll,:)=[BWcondition, theColor, theResponse, accuracy, RT];
+    dlmwrite(filename, dataMatrix);
+
 end
 
 
 
+end
 
-[ndata, text, alldata] = xlsread('testmatlab.xls')
+

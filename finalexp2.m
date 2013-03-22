@@ -1,6 +1,11 @@
 
+
+
+
+function dataMatrix = finalexp4(filename) %to run this all you need to do is type demoExperiment('filename')
+
 %opens window
-[window,rect]=Screen('OpenWindow', 0); %I defined 0 as the master screen, to output on secondary, window set to '1'
+[window,rect]=Screen('OpenWindow', 1); %I defined 0 as the master screen, to output on secondary, window set to '1'
 %puts in a colour
 Screen('FillRect',window, [255 255 255]);%fills the window with a colour, RGB
 Screen('Flip',window); %flips the newest colour of the window 
@@ -24,34 +29,70 @@ bleftKey=KbName('z'); %left buttom button is z
 tleftKey=KbName('a'); %left top button is a
 brightKey=KbName('m'); %right button is m
 trightKey=KbName('k'); %right button is m
+
+%Defining pictures and reading them
+mask=imread('mask.png');
+
+
+%extract data
 [ndata, text, alldata] = xlsread('testmatlab.xls');
 
 
 
 %begin experiment
 doneLooking=0;
-while doneLooking == 0
+
+while doneLooking == 0;
     theRow= round(1 + (36-1).*rand(1,1)) %outputs a random number;
-    theWord= alldata(theRow,1);
-    BWcondition = alldata(theRow,2);
-    theColor = alldata(theRow,3);
+    theWord= alldata(theRow,1)
+    BWcondition = cell2mat(alldata(theRow,2))
+    theColor = cell2mat(alldata(theRow,3))
+    Screen('FillRect',window, [255 255 255]);
+    Screen('Flip', window);
     if BWcondition == 0
         %present in black
-        doneLooking==1;
+        Screen('TextSize', window , 50);
+        Screen('DrawText',window, 'theWord', 600,300)
+        WaitSecs(0.5);
+        %add one to the BWcondition
+        alldata(theRow,2)= cell2mat(alldata(theRow,2))+1;
+    
     elseif BWcondition ==1
         %present in color
-    else
+        if theColor==1
+            %present in red
+            Screen('TextSize', window , 50);
+            Screen('DrawText',window, theWord, 600,300, [150 20 20])
+            WaitSecs(0.5);
+        elseif theColor==2
+            %present in blue
+            Screen('TextSize', window , 50);
+            Screen('DrawText',window, theWord, 600,300, [20 20 150])
+            WaitSecs(0.5);
+        elseif theColor==3
+            %present in green
+            Screen('TextSize', window , 50);
+            Screen('DrawText',window, theWord, 600,300, [20 150 20])
+            WaitSecs(0.5);
+        end
+        
+        %add one to the BWcondition
+        alldata(theRow,2)= cell2mat(alldata(theRow,2))+1;
+    
+    else %if BWcondition ==2
         %find new word
         doneLooking = 0;
     end
-    alldata(theRow,2)= alldata(theRow,2)+1;
+    
+    
+    %check to see if addition is all equal to 3
     sumAll = sum(cell2mat(alldata(:,2))) %to add all the data 
     if sumAll ==72 
-        break
+        doneLooking = 1;
     end
 end
 
 
+end
 
 
-[ndata, text, alldata] = xlsread('testmatlab.xls')
